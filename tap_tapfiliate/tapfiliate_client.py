@@ -84,12 +84,14 @@ class TapfiliateRestApi(object):
                             "No need to more calls : received empty list or one document"
                         )
                         if isinstance(latest_data, dict):
-                            yield latest_data
+                            yield parameters["page"], latest_data
                         else:
-                            yield from latest_data
+                            for record in latest_data:
+                                yield parameters["page"], record
                         more_pages = False
                     else:
-                        yield from latest_data
+                        for record in latest_data:
+                            yield parameters["page"], record
                         parameters["page"] = parameters["page"] + 1
 
                         # The number of requests you have left before exceeding the rate limit
