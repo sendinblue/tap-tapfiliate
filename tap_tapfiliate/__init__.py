@@ -126,9 +126,10 @@ def sync(config, state, catalog):
             key_properties=stream.key_properties,
         )
 
-        singer.write_records(
-            stream.tap_stream_id, tapfiliate_client.sync_endpoints(stream.tap_stream_id)
-        )
+        for record in tapfiliate_client.sync_endpoints(stream.tap_stream_id):
+            singer.write_record(
+                stream.tap_stream_id, record
+            )
 
     return
 
