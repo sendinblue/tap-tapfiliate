@@ -21,11 +21,17 @@ class TapfiliateRestApi(object):
         "programs",
     ]
 
-    def __init__(self, x_api_key):
+    def __init__(
+        self,
+        x_api_key,
+        api_base="https://api.tapfiliate.com",
+        api_version="1.6",
+        retry=10,
+    ):
         self.x_api_key = x_api_key
-        self.api_base = "https://api.tapfiliate.com"
-        self.api_version = "1.6"
-        self.retry = 10
+        self.api_base = api_base
+        self.api_version = api_version
+        self.retry = retry
 
     def sync_endpoints(self, stream, parameters={}):
         # Endpoints documentations

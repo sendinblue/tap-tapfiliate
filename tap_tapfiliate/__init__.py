@@ -11,6 +11,7 @@ REQUIRED_CONFIG_KEYS = ["x-api-token"]
 
 LOGGER = singer.get_logger()
 
+
 def get_abs_path(path):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
 
@@ -115,9 +116,7 @@ def sync(config, state, catalog):
     # Loop over selected streams in catalog
     for stream in catalog.get_selected_streams(state):
         LOGGER.info("Syncing stream:" + stream.tap_stream_id)
-        tapfiliate_client = TapfiliateRestApi(
-            config["x-api-token"]
-        )
+        tapfiliate_client = TapfiliateRestApi(x_api_key=config["x-api-token"], retry=30)
         if stream.tap_stream_id not in TapfiliateRestApi.tapfiliate_streams:
             raise Exception(f"Unknown stream : {stream.tap_stream_id}")
 
@@ -127,7 +126,9 @@ def sync(config, state, catalog):
             key_properties=stream.key_properties,
         )
 
-        singer.write_records(stream.tap_stream_id, tapfiliate_client.sync_endpoints(stream.tap_stream_id))
+        singer.write_records(
+            stream.tap_stream_id, tapfiliate_client.sync_endpoints(stream.tap_stream_id)
+        )
 
     return
 
