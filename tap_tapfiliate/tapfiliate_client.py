@@ -56,7 +56,7 @@ class TapfiliateRestApi(object):
         current_retry = 0
         while more_pages:
             url = f"{self.api_base}/{self.api_version}/{stream}/?{urllib.parse.unquote(urllib.parse.urlencode(parameters))}"
-            print(f"get from : {url}")
+            LOGGER.debug(f"get from : {url}")
 
             try:
                 response = requests.get(url, headers=headers, timeout=60)
@@ -84,12 +84,12 @@ class TapfiliateRestApi(object):
                             "No need to more calls : received empty list or one document"
                         )
                         if isinstance(latest_data, dict):
-                            yield [latest_data]
-                        else:
                             yield latest_data
+                        else:
+                            yield from latest_data
                         more_pages = False
                     else:
-                        yield latest_data
+                        yield from latest_data
                         parameters["page"] = parameters["page"] + 1
 
                         # The number of requests you have left before exceeding the rate limit
