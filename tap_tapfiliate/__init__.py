@@ -146,16 +146,18 @@ def sync(config, state, catalog):
             key_properties=stream.key_properties,
         )
 
-        for new_bookmark_value, record in tapfiliate_client.sync_endpoints(
-            stream.tap_stream_id, parameters={bookmark_column: bookmark_value}
-        ):
-            singer.write_record(stream.tap_stream_id, record)
+        with singer.metrics.record_counter(stream.tap_stream_id) as counter:
+            for new_bookmark_value, record in tapfiliate_client.sync_endpoints(
+                stream.tap_stream_id, parameters={bookmark_column: bookmark_value}
+            ):
+                singer.write_record(stream.tap_stream_id, record)
+                counter.increment()
 
-            if new_bookmark_value > bookmark_value:
-                state = singer.write_bookmark(
-                    state, stream.tap_stream_id, bookmark_column, new_bookmark_value
-                )
-                singer.write_state(state)
+                if new_bookmark_value > bookmark_value:
+                    state = singer.write_bookmark(
+                        state, stream.tap_stream_id, bookmark_column, new_bookmark_value
+                    )
+                    singer.write_state(state)
 
     return
 

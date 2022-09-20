@@ -94,6 +94,10 @@ class TapfiliateRestApi(object):
                             yield parameters["page"], record
                         parameters["page"] = parameters["page"] + 1
 
+                        # Display next page number every xx pages
+                        if parameters["page"] % 10 == 0:
+                            LOGGER.info(f"Next {stream} page to get {parameters['page']}. Links : {response.headers['Link']}")
+
                         # The number of requests you have left before exceeding the rate limit
                         x_ratelimit_remaining = int(
                             response.headers["X-Ratelimit-Remaining"]
