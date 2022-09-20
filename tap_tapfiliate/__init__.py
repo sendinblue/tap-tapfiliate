@@ -29,17 +29,30 @@ def load_schemas():
 
 def get_bookmark(stream_id):
     bookmark = {
-        # "surveys_responses": "recorded_date"
+        "affiliate-groups": "page",
+        "affiliate-prospects": "page",
+        "affiliates": "page",
+        "balances": "page",
+        "commissions": "page",
+        "conversions": "page",
+        "customers": "page",
+        "payments": "page",
+        "programs": "page",
     }
     return bookmark.get(stream_id)
 
 
 def get_key_properties(stream_id):
     key_properties = {
+        "affiliate-groups": ["id"],
+        "affiliate-prospects": ["id"],
         "affiliates": ["id"],
-        # "surveys_groups": ["id"],
-        # "surveys_questions": ["survey_id", "question_id"],
-        # "surveys_responses": ["survey_id", "response_id"]
+        "balances": ["id"],
+        "commissions": ["id"],
+        "conversions": ["id"],
+        "customers": ["id"],
+        "payments": ["id"],
+        "programs": ["id"],
     }
     return key_properties.get(stream_id, [])
 
@@ -115,6 +128,13 @@ def discover():
 def sync(config, state, catalog):
     # Loop over selected streams in catalog
     for stream in catalog.get_selected_streams(state):
+        bookmark_column = get_bookmark(stream.tap_stream_id)
+        bookmark_value = (
+            singer.get_bookmark(state, stream.tap_stream_id, bookmark_column)
+            if state.get("bookmarks", {}).get(stream.tap_stream_id)
+            else 1
+        )
+
         LOGGER.info("Syncing stream:" + stream.tap_stream_id)
         tapfiliate_client = TapfiliateRestApi(x_api_key=config["x-api-token"], retry=30)
         if stream.tap_stream_id not in TapfiliateRestApi.tapfiliate_streams:
@@ -126,10 +146,16 @@ def sync(config, state, catalog):
             key_properties=stream.key_properties,
         )
 
-        for record in tapfiliate_client.sync_endpoints(stream.tap_stream_id):
-            singer.write_record(
-                stream.tap_stream_id, record
-            )
+        for new_bookmark_value, record in tapfiliate_client.sync_endpoints(
+            stream.tap_stream_id, parameters={bookmark_column: bookmark_value}
+        ):
+            singer.write_record(stream.tap_stream_id, record)
+
+            if new_bookmark_value > bookmark_value:
+                state = singer.write_bookmark(
+                    state, stream.tap_stream_id, bookmark_column, new_bookmark_value
+                )
+                singer.write_state(state)
 
     return
 
