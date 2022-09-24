@@ -52,14 +52,15 @@ class TapfiliateRestApi(object):
         if "page" not in parameters:
             parameters["page"] = 1
 
+        is_first_call = True
         more_pages = True
         current_retry = 0
         while more_pages:
             url = f"{self.api_base}/{self.api_version}/{stream}/?{urllib.parse.unquote(urllib.parse.urlencode(parameters))}"
-            if parameters["page"] == 1:
-                LOGGER.info(f"First get from URL : {url}")
-            
-            LOGGER.debug(f"Get from URL : {url}")
+            if is_first_call:
+                LOGGER.info(f"Get from URL (first call) : {url}")
+            else:
+                LOGGER.debug(f"Get from URL : {url}")
 
             try:
                 response = requests.get(url, headers=headers, timeout=60)
@@ -76,25 +77,27 @@ class TapfiliateRestApi(object):
                             f"Too many retry, last response status_code {response.status_code} : {response.content}"
                         )
                 else:
-                    if parameters["page"] == 1 and "link" in response.headers:
-                        # debug for first run, display all links
-                        LOGGER.debug(f"links : {response.headers['link']}")
+                    if is_first_call and "link" in response.headers:
+                        # display all links
+                        LOGGER.info(f"links : {response.headers['link']}")
 
                     records = json.loads(response.content.decode("utf-8"))
                     if isinstance(records, dict):
-                        LOGGER.info("Last call returned one document")
+                        LOGGER.debug("Last call returned one document, convert it to list of one document")
                         records = [records]
 
+                    LOGGER.info(f"Last call for {stream}, page {parameters['page']} returned {len(records)} documents")
                     for record in records:
                         yield parameters["page"], record
 
                     if len(records) <= 1:
-                        LOGGER.info(
-                            "No need to more calls"
-                        )
+                        LOGGER.info("No need to do more calls")
                         more_pages = False
+                        is_first_call = False
+
                     else:
                         parameters["page"] = parameters["page"] + 1
+                        is_first_call = False
 
                         # Display next page number every xx pages
                         if parameters["page"] % 10 == 0:

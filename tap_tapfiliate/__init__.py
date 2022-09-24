@@ -151,7 +151,7 @@ def sync(config, state, catalog):
         bookmark_value = singer.get_bookmark(state, stream.tap_stream_id, bookmark_column, 1 if bookmark_column == 'page' else config["date_from"])
 
         LOGGER.info("Syncing stream:" + stream.tap_stream_id)
-        tapfiliate_client = TapfiliateRestApi(x_api_key=config["x-api-token"], retry=30)
+        tapfiliate_client = TapfiliateRestApi(x_api_key=config["x-api-token"], retry=5)
         if stream.tap_stream_id not in TapfiliateRestApi.tapfiliate_streams:
             raise Exception(f"Unknown stream : {stream.tap_stream_id}")
 
