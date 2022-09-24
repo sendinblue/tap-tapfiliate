@@ -56,7 +56,10 @@ class TapfiliateRestApi(object):
         current_retry = 0
         while more_pages:
             url = f"{self.api_base}/{self.api_version}/{stream}/?{urllib.parse.unquote(urllib.parse.urlencode(parameters))}"
-            LOGGER.debug(f"get from : {url}")
+            if parameters["page"] == 1:
+                LOGGER.info(f"First get from URL : {url}")
+            
+            LOGGER.debug(f"Get from URL : {url}")
 
             try:
                 response = requests.get(url, headers=headers, timeout=60)
@@ -77,21 +80,20 @@ class TapfiliateRestApi(object):
                         # debug for first run, display all links
                         LOGGER.debug(f"links : {response.headers['link']}")
 
-                    latest_data = json.loads(response.content.decode("utf-8"))
+                    records = json.loads(response.content.decode("utf-8"))
+                    if isinstance(records, dict):
+                        LOGGER.info("Last call returned one document")
+                        records = [records]
 
-                    if isinstance(latest_data, dict) or len(latest_data) <= 1:
+                    for record in records:
+                        yield parameters["page"], record
+
+                    if len(records) <= 1:
                         LOGGER.info(
-                            "No need to more calls : received empty list or one document"
+                            "No need to more calls"
                         )
-                        if isinstance(latest_data, dict):
-                            yield parameters["page"], latest_data
-                        else:
-                            for record in latest_data:
-                                yield parameters["page"], record
                         more_pages = False
                     else:
-                        for record in latest_data:
-                            yield parameters["page"], record
                         parameters["page"] = parameters["page"] + 1
 
                         # Display next page number every xx pages

@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 import os
 import json
+import datetime
+from datetime import timedelta
+
 import singer
-from singer import utils, metadata
+from singer import utils
 from singer.catalog import Catalog, CatalogEntry
 from singer.schema import Schema
 from tap_tapfiliate.tapfiliate_client import TapfiliateRestApi
@@ -34,8 +37,8 @@ def get_bookmark(stream_id):
         "affiliates": "page",
         "balances": "page",
         "commissions": "page",
-        "conversions": "page",
-        "customers": "page",
+        "conversions": "date_from",
+        "customers": "date_from",
         "payments": "page",
         "programs": "page",
     }
@@ -125,14 +128,29 @@ def discover():
     return Catalog(streams)
 
 
+def daterange(date1, date2):
+    for n in range(int((date2 - date1).days)+1):
+        yield date1 + timedelta(n)
+
+def generate_dates_to_today(date_from_str:str):
+    format = '%Y-%m-%d'
+    date_from = datetime.datetime.strptime(date_from_str, format)
+    date_to = datetime.datetime.today()
+
+    for dt in daterange(date_from, date_to):
+        yield dt.strftime(format)
+
+
 def sync(config, state, catalog):
     # Loop over selected streams in catalog
     for stream in catalog.get_selected_streams(state):
         bookmark_column = get_bookmark(stream.tap_stream_id)
+        bookmark_default_value = 1 if bookmark_column == 'page' else '2015-01-01'
+
         bookmark_value = (
             singer.get_bookmark(state, stream.tap_stream_id, bookmark_column)
             if state.get("bookmarks", {}).get(stream.tap_stream_id)
-            else 1
+            else bookmark_default_value
         )
 
         LOGGER.info("Syncing stream:" + stream.tap_stream_id)
@@ -147,17 +165,32 @@ def sync(config, state, catalog):
         )
 
         with singer.metrics.record_counter(stream.tap_stream_id) as counter:
-            for new_bookmark_value, record in tapfiliate_client.sync_endpoints(
-                stream.tap_stream_id, parameters={bookmark_column: bookmark_value}
-            ):
-                singer.write_record(stream.tap_stream_id, record)
-                counter.increment()
+            if bookmark_column == 'page':
+                for page, record in tapfiliate_client.sync_endpoints(
+                    stream.tap_stream_id, parameters={bookmark_column: bookmark_value}
+                ):
+                    singer.write_record(stream.tap_stream_id, record)
+                    counter.increment()
 
-                if new_bookmark_value > bookmark_value:
                     state = singer.write_bookmark(
-                        state, stream.tap_stream_id, bookmark_column, new_bookmark_value
+                        state, stream.tap_stream_id, bookmark_column, page
                     )
                     singer.write_state(state)
+
+            elif bookmark_column == 'date_from':
+                for date_from in generate_dates_to_today(bookmark_value):
+                    for _, record in tapfiliate_client.sync_endpoints(
+                            stream.tap_stream_id, parameters={'date_from': date_from,
+                                                              'date_to': date_from}
+                    ):
+                        singer.write_record(stream.tap_stream_id, record)
+                        counter.increment()
+
+                state = singer.write_bookmark(
+                    state, stream.tap_stream_id, bookmark_column, date_from
+                )
+                singer.write_state(state)
+
 
     return
 
