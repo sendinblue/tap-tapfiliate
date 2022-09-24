@@ -10,7 +10,7 @@ from singer.catalog import Catalog, CatalogEntry
 from singer.schema import Schema
 from tap_tapfiliate.tapfiliate_client import TapfiliateRestApi
 
-REQUIRED_CONFIG_KEYS = ["x-api-token"]
+REQUIRED_CONFIG_KEYS = ["x-api-token", "date_from"]
 
 LOGGER = singer.get_logger()
 
@@ -145,7 +145,7 @@ def sync(config, state, catalog):
     # Loop over selected streams in catalog
     for stream in catalog.get_selected_streams(state):
         bookmark_column = get_bookmark(stream.tap_stream_id)
-        bookmark_default_value = 1 if bookmark_column == 'page' else '2015-01-01'
+        bookmark_default_value = 1 if bookmark_column == 'page' else config["date_from"]
 
         bookmark_value = (
             singer.get_bookmark(state, stream.tap_stream_id, bookmark_column)

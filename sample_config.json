@@ -1,3 +1,4 @@
 {
-  "x-api-token": "tap-tapfiliate-token"
+  "x-api-token": "tap-tapfiliate-token",
+  "date_from": "2018-01-01"
 }
