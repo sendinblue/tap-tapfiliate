@@ -35,11 +35,11 @@ def get_bookmark(stream_id):
         "affiliate-groups": "page",
         "affiliate-prospects": "page",
         "affiliates": "page",
-        "balances": "page",
+        # "balances": "page",
         "commissions": "page",
         "conversions": "date_from",
         "customers": "date_from",
-        "payments": "page",
+        # "payments": "page",
         "programs": "page",
     }
     return bookmark.get(stream_id)
@@ -50,11 +50,11 @@ def get_key_properties(stream_id):
         "affiliate-groups": ["id"],
         "affiliate-prospects": ["id"],
         "affiliates": ["id"],
-        "balances": ["id"],
+        # "balances": ["id"],
         "commissions": ["id"],
         "conversions": ["id"],
         "customers": ["id"],
-        "payments": ["id"],
+        # "payments": ["id"],
         "programs": ["id"],
     }
     return key_properties.get(stream_id, [])

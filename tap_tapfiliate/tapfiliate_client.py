@@ -13,11 +13,11 @@ class TapfiliateRestApi(object):
         "affiliate-groups",
         "affiliate-prospects",
         "affiliates",
-        "balances",
+        # "balances",
         "commissions",
         "conversions",
         "customers",
-        "payments",
+        # "payments",
         "programs",
     ]
 
