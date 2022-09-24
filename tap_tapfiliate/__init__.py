@@ -200,6 +200,10 @@ def main():
     # Parse command line arguments
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
 
+    if args.state:
+        LOGGER.info(f"Current state value : {args.state}")
+        singer.write_state(args.state)
+
     # If discover flag was passed, run discovery mode and dump output to stdout
     if args.discover:
         catalog = discover()
