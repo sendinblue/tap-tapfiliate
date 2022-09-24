@@ -86,11 +86,12 @@ class TapfiliateRestApi(object):
                         LOGGER.debug("Last call returned one document, convert it to list of one document")
                         records = [records]
 
-                    LOGGER.info(f"Last call for {stream}, page {parameters['page']} returned {len(records)} documents")
+                    LOGGER.info(f"Last call for {stream}, {parameters=} returned {len(records)} documents")
                     for record in records:
                         yield parameters["page"], record
 
-                    if len(records) <= 1:
+                    # 25 is the max returned documents count by call
+                    if len(records) < 25:
                         LOGGER.info("No need to do more calls")
                         more_pages = False
                         is_first_call = False
