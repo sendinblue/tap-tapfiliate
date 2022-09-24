@@ -142,16 +142,13 @@ def generate_dates_to_today(date_from_str:str):
 
 
 def sync(config, state, catalog):
+    # backup state
+    singer.write_state(state)
+
     # Loop over selected streams in catalog
     for stream in catalog.get_selected_streams(state):
         bookmark_column = get_bookmark(stream.tap_stream_id)
-        bookmark_default_value = 1 if bookmark_column == 'page' else config["date_from"]
-
-        bookmark_value = (
-            singer.get_bookmark(state, stream.tap_stream_id, bookmark_column)
-            if state.get("bookmarks", {}).get(stream.tap_stream_id)
-            else bookmark_default_value
-        )
+        bookmark_value = singer.get_bookmark(state, stream.tap_stream_id, bookmark_column, 1 if bookmark_column == 'page' else config["date_from"])
 
         LOGGER.info("Syncing stream:" + stream.tap_stream_id)
         tapfiliate_client = TapfiliateRestApi(x_api_key=config["x-api-token"], retry=30)
@@ -200,9 +197,7 @@ def main():
     # Parse command line arguments
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
 
-    if args.state:
-        LOGGER.info(f"Current state value : {args.state}")
-        singer.write_state(args.state)
+    LOGGER.info(f"Current config args : {args}")
 
     # If discover flag was passed, run discovery mode and dump output to stdout
     if args.discover:
