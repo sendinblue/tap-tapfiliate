@@ -9,7 +9,7 @@ LOGGER = singer.get_logger()
 
 
 class TapfiliateRestApi(object):
-    tapfiliate_streams = [
+    tapfiliate_get_streams = [
         "affiliate-groups",
         "affiliate-prospects",
         "affiliates",
@@ -33,7 +33,7 @@ class TapfiliateRestApi(object):
         self.api_version = api_version
         self.retry = retry
 
-    def sync_endpoints(self, stream, parameters={}):
+    def get_sync_endpoints(self, stream, parameters={}):
         # Endpoints documentations
         # https://tapfiliate.com/docs/rest/#customers-customers-collection-get
         # https://tapfiliate.com/docs/rest/#conversions-conversions-collection-get

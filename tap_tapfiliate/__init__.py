@@ -152,7 +152,7 @@ def sync(config, state, catalog):
 
         LOGGER.info("Syncing stream:" + stream.tap_stream_id)
         tapfiliate_client = TapfiliateRestApi(x_api_key=config["x-api-token"], retry=5)
-        if stream.tap_stream_id not in TapfiliateRestApi.tapfiliate_streams:
+        if stream.tap_stream_id not in TapfiliateRestApi.tapfiliate_get_streams:
             raise Exception(f"Unknown stream : {stream.tap_stream_id}")
 
         singer.write_schema(
@@ -163,7 +163,7 @@ def sync(config, state, catalog):
 
         with singer.metrics.record_counter(stream.tap_stream_id) as counter:
             if bookmark_column == 'page':
-                for page, record in tapfiliate_client.sync_endpoints(
+                for page, record in tapfiliate_client.get_sync_endpoints(
                     stream.tap_stream_id, parameters={bookmark_column: bookmark_value}
                 ):
                     singer.write_record(stream.tap_stream_id, record)
@@ -176,7 +176,7 @@ def sync(config, state, catalog):
 
             elif bookmark_column == 'date_from':
                 for date_from in generate_dates_to_today(bookmark_value):
-                    for _, record in tapfiliate_client.sync_endpoints(
+                    for _, record in tapfiliate_client.get_sync_endpoints(
                             stream.tap_stream_id, parameters={'date_from': date_from,
                                                               'date_to': date_from}
                     ):
