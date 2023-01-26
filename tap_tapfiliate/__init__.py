@@ -134,7 +134,7 @@ def daterange(date1, date2):
 
 def generate_dates_to_today(date_from_str:str):
     format = '%Y-%m-%d'
-    date_from = datetime.datetime.strptime(date_from_str, format)
+    date_from = datetime.datetime.strptime(date_from_str, format)-timedelta(days=2)
     date_to = datetime.datetime.today()
 
     for dt in daterange(date_from, date_to):
@@ -163,6 +163,8 @@ def sync(config, state, catalog):
 
         with singer.metrics.record_counter(stream.tap_stream_id) as counter:
             if bookmark_column == 'page':
+                if int(bookmark_value)>10:
+                    bookmark_value=str(int(int(bookmark_value)*0.98)) #offsetting two percent of pages from the last bookmarked page
                 for page, record in tapfiliate_client.get_sync_endpoints(
                     stream.tap_stream_id, parameters={bookmark_column: bookmark_value}
                 ):
