@@ -1,4 +1,6 @@
 {
   "x-api-token": "tap-tapfiliate-token",
-  "date_from": "2018-01-01"
+  "date_from": "2018-01-01",
+  "page_offset_percentage": "2",
+  "date_offset_days": "2"
 }

@@ -10,7 +10,7 @@ from singer.catalog import Catalog, CatalogEntry
 from singer.schema import Schema
 from tap_tapfiliate.tapfiliate_client import TapfiliateRestApi
 
-REQUIRED_CONFIG_KEYS = ["x-api-token", "date_from"]
+REQUIRED_CONFIG_KEYS = ["x-api-token", "date_from", "page_offset_percentage", "date_offset_days"]
 
 LOGGER = singer.get_logger()
 
@@ -132,9 +132,9 @@ def daterange(date1, date2):
     for n in range(int((date2 - date1).days)+1):
         yield date1 + timedelta(n)
 
-def generate_dates_to_today(date_from_str:str):
+def generate_dates_to_today(date_from_str:str, config):
     format = '%Y-%m-%d'
-    date_from = datetime.datetime.strptime(date_from_str, format)-timedelta(days=2)
+    date_from = datetime.datetime.strptime(date_from_str, format)-timedelta(days=int(config["date_offset_days"]))
     date_to = datetime.datetime.today()
 
     for dt in daterange(date_from, date_to):
@@ -164,7 +164,7 @@ def sync(config, state, catalog):
         with singer.metrics.record_counter(stream.tap_stream_id) as counter:
             if bookmark_column == 'page':
                 if int(bookmark_value)>10:
-                    bookmark_value=str(int(int(bookmark_value)*0.98)) #offsetting two percent of pages from the last bookmarked page
+                    bookmark_value=str(int(int(bookmark_value) * int(config["page_offset_percentage"])/100)) #offsetting two percent of pages from the last bookmarked page
                 for page, record in tapfiliate_client.get_sync_endpoints(
                     stream.tap_stream_id, parameters={bookmark_column: bookmark_value}
                 ):
@@ -177,7 +177,7 @@ def sync(config, state, catalog):
                     singer.write_state(state)
 
             elif bookmark_column == 'date_from':
-                for date_from in generate_dates_to_today(bookmark_value):
+                for date_from in generate_dates_to_today(bookmark_value, config):
                     for _, record in tapfiliate_client.get_sync_endpoints(
                             stream.tap_stream_id, parameters={'date_from': date_from,
                                                               'date_to': date_from}
