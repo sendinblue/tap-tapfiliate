@@ -134,7 +134,7 @@ def daterange(date1, date2):
 
 def generate_dates_to_today(date_from_str:str, config):
     format = '%Y-%m-%d'
-    date_from = datetime.datetime.strptime(date_from_str, format)-timedelta(days=int(config["date_offset_days"]))
+    date_from = datetime.datetime.strptime(date_from_str, format)-timedelta(days=config["date_offset_days"])
     date_to = datetime.datetime.today()
 
     for dt in daterange(date_from, date_to):
