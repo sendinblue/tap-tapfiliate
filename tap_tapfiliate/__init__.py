@@ -164,7 +164,7 @@ def sync(config, state, catalog):
         with singer.metrics.record_counter(stream.tap_stream_id) as counter:
             if bookmark_column == 'page':
                 if int(bookmark_value)>10:
-                    bookmark_value=str(int(int(bookmark_value) * config["page_offset_percentage"]/100)) # offsetting two percent of pages from the last bookmarked page
+                    bookmark_value=int(int(bookmark_value) * (100-int(config["page_offset_percentage"]))/100) # offsetting two percent of pages from the last bookmarked page
                 for page, record in tapfiliate_client.get_sync_endpoints(
                     stream.tap_stream_id, parameters={bookmark_column: bookmark_value}
                 ):
