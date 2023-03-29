@@ -32,15 +32,15 @@ def load_schemas():
 
 def get_bookmark(stream_id):
     bookmark = {
-        # "affiliate-groups": "page",
-        # "affiliate-prospects": "page",
-        # "affiliates": "page",
+        "affiliate-groups": "page",
+        "affiliate-prospects": "page",
+        "affiliates": "page",
         # "balances": "page",
-        # "commissions": "page",
+        "commissions": "page",
         "conversions": "date_from",
         "customers": "date_from",
         # "payments": "page",
-        # "programs": "page",
+        "programs": "page",
     }
     return bookmark.get(stream_id)
 
@@ -61,7 +61,7 @@ def get_key_properties(stream_id):
 
 
 def create_metadata_for_report(stream_id, schema, key_properties):
-    replication_key = (stream_id)
+    replication_key = get_bookmark(stream_id)
     mdata = [
         {
             "breadcrumb": [],
@@ -129,13 +129,12 @@ def discover():
 
 
 def daterange(date1, date2):
-    for n in range(int((date2 - date1).days) + 1):
+    for n in range(int((date2 - date1).days)+1):
         yield date1 + timedelta(n)
 
-
-def generate_dates_to_today(date_from_str: str, config):
+def generate_dates_to_today(date_from_str:str, config):
     format = '%Y-%m-%d'
-    date_from = datetime.datetime.strptime(date_from_str, format) - timedelta(days=config["date_offset_days"])
+    date_from = datetime.datetime.strptime(date_from_str, format)-timedelta(days=config["date_offset_days"])
     date_to = datetime.datetime.today()
 
     for dt in daterange(date_from, date_to):
